@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Six Nations 2026 Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0f1a;
+            --bg-card: #111827;
+            --bg-card-alt: #162033;
+            --border: #1e2d4a;
+            --text-primary: #e8edf5;
+            --text-secondary: #8899b3;
+            --text-muted: #4a5c7a;
+            --accent-gold: #c8a84e;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(200, 168, 78, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        header {
+            padding: 48px 0 32px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .tournament-badge {
+            display: inline-block;
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            background: rgba(200, 168, 78, 0.08);
+            border: 1px solid rgba(200, 168, 78, 0.2);
+            padding: 6px 18px;
+            border-radius: 2px;
+            margin-bottom: 16px;
+        }
+
+        header h1 {
+            font-family: 'Oswald', sans-serif;
+            font-size: clamp(36px, 6vw, 56px);
+            font-weight: 700;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        header h1 span { color: var(--accent-gold); }
+
+        header .subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .status-pill.live {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-pill.live .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            animation: blink 1.2s infinite;
+        }
+
+        .status-pill.ok {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .status-pill.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .status-pill.loading {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .last-updated {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* SECTION TITLES */
+        .section-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-left: 14px;
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        /* STANDINGS TABLE */
+        .standings-section { margin-bottom: 48px; }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .standings-table thead th {
+            font-family: 'Oswald', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 14px 12px;
+            text-align: center;
+            background: var(--bg-card-alt);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .standings-table thead th:first-child,
+        .standings-table thead th:nth-child(2) { text-align: left; }
+
+        .standings-table tbody tr {
+            border-bottom: 1px solid rgba(30, 45, 74, 0.5);
+            transition: background 0.2s;
+        }
+
+        .standings-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        .standings-table tbody tr:last-child { border-bottom: none; }
+
+        .standings-table td {
+            padding: 14px 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .standings-table td:first-child {
+            width: 36px;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .standings-table td:nth-child(2) { text-align: left; }
+
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .team-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .team-name {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .pts-col {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--accent-gold);
+        }
+
+        .w-col { color: var(--accent-green); font-weight: 600; }
+        .l-col { color: var(--accent-red); font-weight: 600; }
+        .d-col { color: var(--accent-blue); font-weight: 600; }
+        .pd-positive { color: var(--accent-green); font-weight: 600; }
+        .pd-negative { color: var(--accent-red); font-weight: 600; }
+        .pd-neutral { color: var(--text-muted); font-weight: 600; }
+
+        /* FIXTURES */
+        .fixtures-section { margin-bottom: 48px; }
+
+        .round-group { margin-bottom: 28px; }
+
+        .round-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+
+        .fixture-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .fixture-card:hover { border-color: rgba(200, 168, 78, 0.3); }
+
+        .fixture-card.played { border-left: 3px solid var(--accent-green); }
+
+        .fixture-card.in-progress {
+            border-left: 3px solid var(--accent-red);
+            animation: livePulse 2s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { border-left-color: var(--accent-red); }
+            50% { border-left-color: rgba(239, 68, 68, 0.3); }
+        }
+
+        .fixture-team {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fixture-team.away {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .fixture-team .team-name { font-size: 14px; }
+
+        .fixture-center {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .fixture-score {
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .fixture-time {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .fixture-date {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .fixture-venue {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .badge-live {
+            display: inline-block;
+            font-family: 'Oswald', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #fff;
+            background: var(--accent-red);
+            padding: 2px 8px;
+            border-radius: 2px;
+            margin-bottom: 4px;
+            animation: blink 1.2s infinite;
+        }
+
+        .winner { color: var(--accent-green); }
+
+        /* LEGEND */
+        .legend {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 20px 24px;
+            margin-bottom: 48px;
+        }
+
+        .legend h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .legend p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .legend p strong { color: var(--text-primary); }
+
+        /* LOADING SKELETON */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-alt) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-row {
+            height: 48px;
+            margin-bottom: 4px;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 20px;
+        }
+
+        footer a { color: var(--text-secondary); }
+
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 640px) {
+            .standings-table { font-size: 12px; }
+            .standings-table td, .standings-table th { padding: 10px 6px; }
+            .fixture-card {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                text-align: center;
+            }
+            .fixture-team, .fixture-team.away {
+                justify-content: center;
+                text-align: center;
+            }
+            .hide-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="tournament-badge">Guinness Men's</div>
+        <h1>Six Nations <span>2026</span></h1>
+        <div class="subtitle">5 February – 14 March 2026</div>
+        <div class="status-bar">
+            <div id="statusPill" class="status-pill loading">
+                <span>Loading data…</span>
+            </div>
+            <span class="last-updated" id="lastUpdated"></span>
+            <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                Refresh
+            </button>
+        </div>
+    </header>
+
+    <!-- STANDINGS -->
+    <section class="standings-section">
+        <h2 class="section-title">Championship Standings</h2>
+        <table class="standings-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Team</th>
+                    <th>P</th>
+                    <th>W</th>
+                    <th>D</th>
+                    <th>L</th>
+                    <th class="hide-mobile">PF</th>
+                    <th class="hide-mobile">PA</th>
+                    <th>PD</th>
+                    <th class="hide-mobile">BP</th>
+                    <th>Pts</th>
+                </tr>
+            </thead>
+            <tbody id="standingsBody">
+                <tr><td colspan="11"><div class="skeleton skeleton-row"></div></td></tr>
+                <tr><td colspan="11"><div class="skeleton skeleton-row"></div></td></tr>
+                <tr><td colspan="11"><div class="skeleton skeleton-row"></div></td></tr>
+                <tr><td colspan="11"><div class="skeleton skeleton-row"></div></td></tr>
+                <tr><td colspan="11"><div class="skeleton skeleton-row"></div></td></tr>
+                <tr><td colspan="11"><div class="skeleton skeleton-row"></div></td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- FIXTURES -->
+    <section class="fixtures-section">
+        <h2 class="section-title">Fixtures & Results</h2>
+        <div id="fixturesContainer">
+            <div class="skeleton skeleton-row" style="height:80px;margin-bottom:8px"></div>
+            <div class="skeleton skeleton-row" style="height:80px;margin-bottom:8px"></div>
+            <div class="skeleton skeleton-row" style="height:80px;margin-bottom:8px"></div>
+        </div>
+    </section>
+
+    <!-- LEGEND -->
+    <section class="legend">
+        <h3>Points System</h3>
+        <p>
+            <strong>4 pts</strong> for a win · <strong>2 pts</strong> for a draw ·
+            <strong>+1 BP</strong> for scoring 4+ tries or losing by ≤7 points ·
+            <strong>+3 pts</strong> Grand Slam bonus (winning all 5 matches)
+        </p>
+    </section>
+
+    <footer>
+        Data sourced from ESPN's public API · Auto-refreshes every 60s during live matches / 5 min otherwise<br>
+        <a href="https://www.espn.com/rugby/standings/_/league/180659" target="_blank">View on ESPN</a> ·
+        Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>
+    </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ESPN API CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+//
+// This page uses ESPN's free, public (unofficial) JSON API.
+// No API key required. The endpoints are:
+//
+//   Scoreboard: site.api.espn.com/apis/site/v2/sports/rugby/180659/scoreboard
+//   Standings:  site.api.espn.com/apis/site/v2/sports/rugby/180659/standings
+//
+// League ID 180659 = Six Nations
+//
+// HOW TO HOST:
+// 1. Save this single HTML file
+// 2. Open it in your browser — it works locally (no server needed)
+// 3. OR upload to GitHub Pages / Netlify / Vercel for free hosting
+//    so you can access it from any device
+//
+// The page auto-refreshes every 60 seconds when a match is live,
+// or every 5 minutes otherwise.
+
+const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/rugby/180659';
+const TEAM_COLORS = {
+    'England':  '#e4002b',
+    'France':   '#003399',
+    'Ireland':  '#00843d',
+    'Italy':    '#0066cc',
+    'Scotland': '#003078',
+    'Wales':    '#d4003c',
+};
+
+// Fallback fixture data (used if API is unreachable)
+const FALLBACK_FIXTURES = [
+    { round: 1, date: '2026-02-05T20:10', home: 'France',  away: 'Ireland',  venue: 'Stade de France, Paris' },
+    { round: 1, date: '2026-02-07T14:10', home: 'Italy',   away: 'Scotland', venue: 'Stadio Olimpico, Rome' },
+    { round: 1, date: '2026-02-07T16:40', home: 'England', away: 'Wales',    venue: 'Allianz Stadium, Twickenham' },
+    { round: 2, date: '2026-02-14T14:10', home: 'Ireland', away: 'Italy',    venue: 'Aviva Stadium, Dublin' },
+    { round: 2, date: '2026-02-14T16:40', home: 'Scotland',away: 'England',  venue: 'Murrayfield, Edinburgh' },
+    { round: 2, date: '2026-02-15T15:10', home: 'Wales',   away: 'France',   venue: 'Principality Stadium, Cardiff' },
+    { round: 3, date: '2026-02-21T14:10', home: 'England', away: 'Ireland',  venue: 'Allianz Stadium, Twickenham' },
+    { round: 3, date: '2026-02-21T16:40', home: 'Wales',   away: 'Scotland', venue: 'Principality Stadium, Cardiff' },
+    { round: 3, date: '2026-02-22T16:10', home: 'France',  away: 'Italy',    venue: 'Stade de France, Paris' },
+    { round: 4, date: '2026-03-06T20:10', home: 'Ireland', away: 'Wales',    venue: 'Aviva Stadium, Dublin' },
+    { round: 4, date: '2026-03-07T14:10', home: 'Italy',   away: 'England',  venue: 'Stadio Olimpico, Rome' },
+    { round: 4, date: '2026-03-07T17:40', home: 'Scotland',away: 'France',   venue: 'Murrayfield, Edinburgh' },
+    { round: 5, date: '2026-03-14T14:10', home: 'Wales',   away: 'Italy',    venue: 'Principality Stadium, Cardiff' },
+    { round: 5, date: '2026-03-14T16:40', home: 'Scotland',away: 'Ireland',  venue: 'Murrayfield, Edinburgh' },
+    { round: 5, date: '2026-03-14T21:10', home: 'France',  away: 'England',  venue: 'Stade de France, Paris' },
+];
+
+let isLiveMatch = false;
+let refreshTimer = null;
+
+// ═══════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════════════════════
+
+async function fetchStandings() {
+    const res = await fetch(`${ESPN_BASE}/standings`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+async function fetchScoreboard() {
+    const res = await fetch(`${ESPN_BASE}/scoreboard`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════
+
+function renderStandings(data) {
+    const tbody = document.getElementById('standingsBody');
+
+    // Try to parse ESPN standings format
+    let entries = [];
+    try {
+        // ESPN standings structure: data.children[0].standings.entries
+        const standingsArr = data?.children?.[0]?.standings?.entries || data?.standings?.entries || [];
+        entries = standingsArr.map(entry => {
+            const stats = {};
+            (entry.stats || []).forEach(s => { stats[s.name] = s.value; });
+            const teamName = entry.team?.displayName || entry.team?.name || 'Unknown';
+            const teamLogo = entry.team?.logos?.[0]?.href || '';
+            return {
+                name: teamName,
+                logo: teamLogo,
+                color: TEAM_COLORS[teamName] || '#888',
+                p:   stats.gamesPlayed ?? 0,
+                w:   stats.wins ?? 0,
+                d:   stats.ties ?? stats.draws ?? 0,
+                l:   stats.losses ?? 0,
+                pf:  stats.pointsFor ?? 0,
+                pa:  stats.pointsAgainst ?? 0,
+                pd:  stats.pointsDifference ?? stats.differential ?? 0,
+                bp:  stats.bonusPoints ?? stats.bonus ?? 0,
+                pts: stats.points ?? 0,
+            };
+        });
+    } catch (e) {
+        console.warn('Could not parse standings:', e);
+    }
+
+    // If no entries from API, build from fallback (all zeros pre-tournament)
+    if (entries.length === 0) {
+        entries = Object.keys(TEAM_COLORS).map(name => ({
+            name, color: TEAM_COLORS[name], logo: '', p:0, w:0, d:0, l:0, pf:0, pa:0, pd:0, bp:0, pts:0
+        }));
+    }
+
+    // Sort: pts desc, pd desc
+    entries.sort((a, b) => b.pts - a.pts || b.pd - a.pd);
+
+    tbody.innerHTML = entries.map((t, i) => {
+        const pdClass = t.pd > 0 ? 'pd-positive' : t.pd < 0 ? 'pd-negative' : 'pd-neutral';
+        const pdStr = t.pd > 0 ? `+${t.pd}` : `${t.pd}`;
+        const logoHtml = t.logo
+            ? `<img class="team-logo" src="${t.logo}" alt="${t.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'">`
+            : '';
+        return `
+            <tr>
+                <td>${i + 1}</td>
+                <td>
+                    <div class="team-cell">
+                        ${logoHtml}
+                        <span class="team-dot" style="background:${t.color};${t.logo ? 'display:none' : ''}"></span>
+                        <span class="team-name">${t.name}</span>
+                    </div>
+                </td>
+                <td>${t.p}</td>
+                <td class="w-col">${t.w}</td>
+                <td class="d-col">${t.d}</td>
+                <td class="l-col">${t.l}</td>
+                <td class="hide-mobile">${t.pf}</td>
+                <td class="hide-mobile">${t.pa}</td>
+                <td class="${pdClass}">${pdStr}</td>
+                <td class="hide-mobile">${t.bp}</td>
+                <td class="pts-col">${t.pts}</td>
+            </tr>`;
+    }).join('');
+}
+
+function renderFixtures(data) {
+    const container = document.getElementById('fixturesContainer');
+    isLiveMatch = false;
+
+    let events = [];
+    try {
+        events = data?.events || [];
+    } catch (e) {
+        console.warn('Could not parse scoreboard:', e);
+    }
+
+    // If we got events from API, use them
+    if (events.length > 0) {
+        // Group by round (week)
+        const rounds = {};
+        events.forEach(ev => {
+            const comp = ev.competitions?.[0] || {};
+            const roundNum = ev.week?.number || ev.season?.type || 1;
+            const roundLabel = ev.week?.text || `Round ${roundNum}`;
+
+            if (!rounds[roundLabel]) rounds[roundLabel] = [];
+
+            const competitors = comp.competitors || [];
+            const homeTeam = competitors.find(c => c.homeAway === 'home') || competitors[0] || {};
+            const awayTeam = competitors.find(c => c.homeAway === 'away') || competitors[1] || {};
+
+            const status = comp.status?.type?.name || ev.status?.type?.name || 'STATUS_SCHEDULED';
+            const isPlayed = status === 'STATUS_FINAL' || status === 'STATUS_FULL_TIME';
+            const isLive = status === 'STATUS_IN_PROGRESS' || status === 'STATUS_HALFTIME' || status === 'STATUS_FIRST_HALF' || status === 'STATUS_SECOND_HALF';
+
+            if (isLive) isLiveMatch = true;
+
+            const statusText = comp.status?.type?.shortDetail || ev.status?.type?.shortDetail || '';
+
+            rounds[roundLabel].push({
+                homeName: homeTeam.team?.displayName || homeTeam.team?.name || '?',
+                homeScore: homeTeam.score || '0',
+                homeLogo: homeTeam.team?.logos?.[0]?.href || '',
+                homeColor: TEAM_COLORS[homeTeam.team?.displayName] || '#888',
+                awayName: awayTeam.team?.displayName || awayTeam.team?.name || '?',
+                awayScore: awayTeam.score || '0',
+                awayLogo: awayTeam.team?.logos?.[0]?.href || '',
+                awayColor: TEAM_COLORS[awayTeam.team?.displayName] || '#888',
+                venue: comp.venue?.fullName || '',
+                date: ev.date || comp.date || '',
+                isPlayed,
+                isLive,
+                statusText,
+                homeWinner: homeTeam.winner,
+                awayWinner: awayTeam.winner,
+            });
+        });
+
+        container.innerHTML = '';
+        for (const [label, fixtures] of Object.entries(rounds)) {
+            container.innerHTML += buildRoundHTML(label, fixtures);
+        }
+    } else {
+        // Fallback to static fixtures
+        const rounds = {};
+        FALLBACK_FIXTURES.forEach(f => {
+            const label = `Round ${f.round}`;
+            if (!rounds[label]) rounds[label] = [];
+            rounds[label].push({
+                homeName: f.home,
+                homeScore: '-',
+                homeLogo: '',
+                homeColor: TEAM_COLORS[f.home],
+                awayName: f.away,
+                awayScore: '-',
+                awayLogo: '',
+                awayColor: TEAM_COLORS[f.away],
+                venue: f.venue,
+                date: f.date,
+                isPlayed: false,
+                isLive: false,
+                statusText: '',
+                homeWinner: false,
+                awayWinner: false,
+            });
+        });
+
+        container.innerHTML = '';
+        for (const [label, fixtures] of Object.entries(rounds)) {
+            container.innerHTML += buildRoundHTML(label, fixtures);
+        }
+    }
+}
+
+function buildRoundHTML(label, fixtures) {
+    let html = `<div class="round-group"><div class="round-label">${label}</div>`;
+
+    fixtures.forEach(f => {
+        const cardClass = f.isLive ? 'fixture-card in-progress'
+            : f.isPlayed ? 'fixture-card played'
+            : 'fixture-card';
+
+        const homeNameClass = f.homeWinner ? 'team-name winner' : 'team-name';
+        const awayNameClass = f.awayWinner ? 'team-name winner' : 'team-name';
+
+        let centerContent;
+        if (f.isLive) {
+            centerContent = `
+                <div class="badge-live">● LIVE</div>
+                <div class="fixture-score">${f.homeScore} – ${f.awayScore}</div>
+                <div class="fixture-date">${f.statusText}</div>
+                <div class="fixture-venue">${f.venue}</div>`;
+        } else if (f.isPlayed) {
+            centerContent = `
+                <div class="fixture-score">${f.homeScore} – ${f.awayScore}</div>
+                <div class="fixture-date">Full Time</div>
+                <div class="fixture-venue">${f.venue}</div>`;
+        } else {
+            const d = new Date(f.date);
+            const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+            centerContent = `
+                <div class="fixture-time">${timeStr}</div>
+                <div class="fixture-date">${dateStr}</div>
+                <div class="fixture-venue">${f.venue}</div>`;
+        }
+
+        html += `
+            <div class="${cardClass}">
+                <div class="fixture-team">
+                    <span class="team-dot" style="background:${f.homeColor}"></span>
+                    <span class="${homeNameClass}">${f.homeName}</span>
+                </div>
+                <div class="fixture-center">${centerContent}</div>
+                <div class="fixture-team away">
+                    <span class="${awayNameClass}">${f.awayName}</span>
+                    <span class="team-dot" style="background:${f.awayColor}"></span>
+                </div>
+            </div>`;
+    });
+
+    html += '</div>';
+    return html;
+}
+
+function setStatus(type, message) {
+    const pill = document.getElementById('statusPill');
+    pill.className = `status-pill ${type}`;
+    pill.innerHTML = type === 'live'
+        ? `<span class="dot"></span><span>${message}</span>`
+        : `<span>${message}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN REFRESH LOGIC
+// ═══════════════════════════════════════════════════════════════
+
+async function refreshData() {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('spinning');
+
+    try {
+        setStatus('loading', 'Fetching data…');
+
+        const [standingsData, scoreboardData] = await Promise.all([
+            fetchStandings().catch(e => { console.warn('Standings fetch failed:', e); return null; }),
+            fetchScoreboard().catch(e => { console.warn('Scoreboard fetch failed:', e); return null; }),
+        ]);
+
+        if (standingsData) {
+            renderStandings(standingsData);
+        } else {
+            // Render empty standings as fallback
+            renderStandings({});
+        }
+
+        if (scoreboardData) {
+            renderFixtures(scoreboardData);
+        } else {
+            renderFixtures({});
+        }
+
+        const now = new Date();
+        document.getElementById('lastUpdated').textContent =
+            `Updated ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+
+        if (isLiveMatch) {
+            setStatus('live', 'Match in progress');
+        } else if (standingsData || scoreboardData) {
+            setStatus('ok', 'Data loaded');
+        } else {
+            setStatus('error', 'Using offline data');
+        }
+
+    } catch (err) {
+        console.error('Refresh error:', err);
+        setStatus('error', 'Could not reach ESPN');
+        // Show fallback data
+        renderStandings({});
+        renderFixtures({});
+    }
+
+    btn.classList.remove('spinning');
+    scheduleNextRefresh();
+}
+
+function scheduleNextRefresh() {
+    if (refreshTimer) clearTimeout(refreshTimer);
+    // 60s during live matches, 5 min otherwise
+    const interval = isLiveMatch ? 60_000 : 300_000;
+    refreshTimer = setTimeout(refreshData, interval);
+}
+
+// Initial load
+refreshData();
+</script>
+
+</body>
+</html>
