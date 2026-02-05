@@ -344,6 +344,10 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                 Refresh
             </button>
+            <button class="refresh-btn" id="demoBtn" onclick="toggleDemo()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Demo Live Match
+            </button>
         </div>
     </header>
 
@@ -810,6 +814,167 @@ async function refreshData() {
 function scheduleNextRefresh() {
     if (refreshTimer) clearTimeout(refreshTimer);
     refreshTimer = setTimeout(refreshData, isLiveMatch ? 60000 : 300000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DEMO MODE — simulates a live match for preview purposes
+// ═══════════════════════════════════════════════════════════════
+let demoActive = false;
+let demoTimer = null;
+let demoEventIndex = 0;
+
+const DEMO_EVENTS = [
+    { time: '1', text: 'Kick-off at the Stade de France', type: 'phase', team: '', player: '', isHome: true },
+    { time: '8', text: 'Penalty goal by Thomas Ramos', type: 'penalty', team: 'France', player: 'T. Ramos', isHome: true },
+    { time: '15', text: 'Yellow card — Tadhg Beirne (Ireland)', type: 'card-yellow', team: 'Ireland', player: 'T. Beirne', isHome: false },
+    { time: '22', text: 'Try scored by Louis Bielle-Biarrey', type: 'try', team: 'France', player: 'L. Bielle-Biarrey', isHome: true },
+    { time: '23', text: 'Conversion by Thomas Ramos', type: 'conversion', team: 'France', player: 'T. Ramos', isHome: true },
+    { time: '31', text: 'Penalty goal by Jack Crowley', type: 'penalty', team: 'Ireland', player: 'J. Crowley', isHome: false },
+    { time: '36', text: 'Try scored by Louis Bielle-Biarrey', type: 'try', team: 'France', player: 'L. Bielle-Biarrey', isHome: true },
+    { time: '37', text: 'Conversion by Thomas Ramos', type: 'conversion', team: 'France', player: 'T. Ramos', isHome: true },
+    { time: '40', text: 'Half Time — France 17–3 Ireland', type: 'phase', team: '', player: '', isHome: true },
+    { time: '48', text: 'Try scored by Bundee Aki', type: 'try', team: 'Ireland', player: 'B. Aki', isHome: false },
+    { time: '49', text: 'Conversion by Jack Crowley', type: 'conversion', team: 'Ireland', player: 'J. Crowley', isHome: false },
+    { time: '55', text: 'Penalty goal by Thomas Ramos', type: 'penalty', team: 'France', player: 'T. Ramos', isHome: true },
+    { time: '62', text: 'Drop goal by Jack Crowley', type: 'drop-goal', team: 'Ireland', player: 'J. Crowley', isHome: false },
+    { time: '68', text: 'Yellow card — Paul Willemse (France)', type: 'card-yellow', team: 'France', player: 'P. Willemse', isHome: true },
+    { time: '74', text: 'Try scored by Damian Penaud', type: 'try', team: 'France', player: 'D. Penaud', isHome: true },
+    { time: '75', text: 'Conversion by Thomas Ramos', type: 'conversion', team: 'France', player: 'T. Ramos', isHome: true },
+];
+
+// Running score tracker for demo
+const DEMO_SCORE_PROGRESSION = [
+    { h: 0, a: 0 },   // kick-off
+    { h: 3, a: 0 },   // penalty Ramos
+    { h: 3, a: 0 },   // yellow card
+    { h: 8, a: 0 },   // try LBB
+    { h: 10, a: 0 },  // conversion
+    { h: 10, a: 3 },  // penalty Crowley
+    { h: 15, a: 3 },  // try LBB
+    { h: 17, a: 3 },  // conversion
+    { h: 17, a: 3 },  // half time
+    { h: 17, a: 8 },  // try Aki
+    { h: 17, a: 10 }, // conversion
+    { h: 20, a: 10 }, // penalty Ramos
+    { h: 20, a: 13 }, // drop goal
+    { h: 20, a: 13 }, // yellow card
+    { h: 25, a: 13 }, // try Penaud
+    { h: 27, a: 13 }, // conversion
+];
+
+function toggleDemo() {
+    const btn = document.getElementById('demoBtn');
+    if (demoActive) {
+        // Stop demo
+        demoActive = false;
+        demoEventIndex = 0;
+        if (demoTimer) clearInterval(demoTimer);
+        document.getElementById('liveMatchSection').classList.remove('visible');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Demo Live Match';
+        setStatus('ok', 'Demo ended');
+        return;
+    }
+
+    // Start demo
+    demoActive = true;
+    demoEventIndex = 0;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Demo';
+    setStatus('live', 'Demo — match in progress');
+
+    // Set up match header
+    const section = document.getElementById('liveMatchSection');
+    section.classList.add('visible');
+    document.getElementById('liveHomeName').textContent = 'France';
+    document.getElementById('liveAwayName').textContent = 'Ireland';
+    document.getElementById('liveHomeDot').style.background = TEAM_COLORS['France'];
+    document.getElementById('liveAwayDot').style.background = TEAM_COLORS['Ireland'];
+    document.getElementById('inGoalHome').style.background = TEAM_COLORS['France'] + '15';
+    document.getElementById('inGoalAway').style.background = TEAM_COLORS['Ireland'] + '15';
+    document.getElementById('liveScore').textContent = '0 – 0';
+    document.getElementById('liveStatus').textContent = '1st Half — 0\'';
+
+    // Clear pitch
+    const pitch = document.getElementById('pitch');
+    pitch.querySelectorAll('.pitch-event').forEach(el => el.remove());
+    document.getElementById('ballIndicator').style.left = '50%';
+    document.getElementById('ballIndicator').style.top = '50%';
+    document.getElementById('timelineContainer').innerHTML = '<div class="no-events-msg">Match starting…</div>';
+
+    // Scroll to visualiser
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Add events one by one
+    addNextDemoEvent();
+    demoTimer = setInterval(() => {
+        if (!demoActive) { clearInterval(demoTimer); return; }
+        addNextDemoEvent();
+    }, 2500);
+}
+
+function addNextDemoEvent() {
+    if (demoEventIndex >= DEMO_EVENTS.length) {
+        // Match "ends"
+        document.getElementById('liveStatus').textContent = 'Full Time';
+        setStatus('ok', 'Demo — full time');
+        demoActive = false;
+        const btn = document.getElementById('demoBtn');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Replay Demo';
+        if (demoTimer) clearInterval(demoTimer);
+        return;
+    }
+
+    const e = DEMO_EVENTS[demoEventIndex];
+    const score = DEMO_SCORE_PROGRESSION[demoEventIndex];
+    demoEventIndex++;
+
+    // Update score
+    document.getElementById('liveScore').textContent = `${score.h} – ${score.a}`;
+    const half = parseInt(e.time) <= 40 ? '1st Half' : '2nd Half';
+    document.getElementById('liveStatus').textContent = `${half} — ${e.time}'`;
+
+    // Add pitch marker for scoring/card events
+    const scoringTypes = ['try','conversion','penalty','drop-goal','card-yellow','card-red'];
+    if (scoringTypes.includes(e.type)) {
+        const pitch = document.getElementById('pitch');
+        // Remove 'latest' from previous markers
+        pitch.querySelectorAll('.pitch-event.latest').forEach(el => el.classList.remove('latest'));
+
+        const minutes = parseFloat(e.time);
+        const yPct = 15 + (Math.sin(minutes * 0.7 + demoEventIndex) * 0.5 + 0.5) * 70;
+        let xPct;
+        if (e.type === 'try') {
+            xPct = e.isHome ? 88 + Math.random()*4 : 4 + Math.random()*4;
+        } else if (e.type === 'conversion' || e.type === 'penalty') {
+            xPct = e.isHome ? 68 + Math.random()*10 : 22 + Math.random()*10;
+        } else if (e.type === 'drop-goal') {
+            xPct = e.isHome ? 58 + Math.random()*12 : 30 + Math.random()*12;
+        } else {
+            xPct = 35 + Math.random() * 30;
+        }
+
+        const marker = document.createElement('div');
+        marker.className = 'pitch-event latest';
+        marker.style.left = `${xPct}%`;
+        marker.style.top = `${yPct}%`;
+        marker.innerHTML = `<div class="marker ${e.type}">${eventSymbol(e.type)}</div><div class="marker-label">${e.time}' ${e.player||e.team} — ${e.type.replace('-',' ')}</div>`;
+        pitch.appendChild(marker);
+
+        // Move ball
+        const ball = document.getElementById('ballIndicator');
+        ball.style.left = `${xPct}%`;
+        ball.style.top = `${yPct}%`;
+    }
+
+    // Update timeline (newest first)
+    const timeline = document.getElementById('timelineContainer');
+    const existing = timeline.querySelector('.no-events-msg');
+    if (existing) existing.remove();
+
+    const eventDiv = document.createElement('div');
+    eventDiv.className = 'timeline-event';
+    const playerText = e.player ? `<strong>${e.player}</strong> — ` : '';
+    eventDiv.innerHTML = `<div class="event-time">${e.time}'</div><div class="event-icon ${e.type}">${eventSymbol(e.type)}</div><div class="event-text">${playerText}${e.text}</div>`;
+    timeline.insertBefore(eventDiv, timeline.firstChild);
 }
 
 // GO
